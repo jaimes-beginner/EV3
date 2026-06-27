@@ -20,7 +20,7 @@ pipeline {
                 echo 'Verificando que la aplicación responda "Hola Mundo"...'
                 sh '''
                     . venv/bin/activate
-                    pytest test_app.py
+                    pytest test-app.py
                 '''
             }
         }
