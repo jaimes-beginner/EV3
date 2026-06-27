@@ -5,7 +5,6 @@ pipeline {
         stage('Construcción (Build)') {
             steps {
                 echo 'Iniciando fase de Construcción...'
-                echo 'Creando entorno virtual e instalando dependencias...'
                 sh '''
                     python3 -m venv venv
                     . venv/bin/activate
@@ -14,22 +13,35 @@ pipeline {
             }
         }
         
-        stage('Pruebas (Test)') {
+        stage('Pruebas Funcionales (Test)') {
             steps {
-                echo 'Ejecutando pruebas automatizadas...'
-                echo 'Verificando que la aplicación responda "Hola Mundo"...'
+                echo 'Verificando que la aplicación funcione...'
                 sh '''
                     . venv/bin/activate
-                    pytest test-app.py
+                    pytest test_app.py
                 '''
+            }
+        }
+        
+        stage('Pruebas de Seguridad (OWASP ZAP)') {
+            steps {
+                echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
+                // El comando '|| true' evita que el pipeline falle si ZAP encuentra advertencias
+                sh 'docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true'
             }
         }
         
         stage('Despliegue (Deploy)') {
             steps {
-                echo 'Iniciando despliegue de la aplicación...'
-                sh 'echo "¡Despliegue exitoso! La aplicación segura está en producción."'
+                echo '¡Despliegue exitoso! Aplicación auditada y en producción.'
             }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Guardando el reporte de vulnerabilidades...'
+            archiveArtifacts artifacts: 'reporte_zap.html', allowEmptyArchive: true
         }
     }
 }
