@@ -24,19 +24,25 @@ pipeline {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
                 sh '''
-                    mkdir -p zap-reports
-                    chmod 777 zap-reports
-
+                    # 1. Correr ZAP con volumen nombrado
                     docker run --rm \
                         --user root \
-                        -v $(pwd)/zap-reports:/zap/wrk/:rw \
+                        -v zap-results:/zap/wrk/:rw \
                         -t zaproxy/zap-stable \
                         /bin/bash -c "
                             zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true
-                            chmod 777 /zap/wrk/reporte_zap.html
+                            chmod 777 /zap/wrk/reporte_zap.html 2>/dev/null || true
                         " || true
 
-                    cp zap-reports/reporte_zap.html . && echo "Reporte copiado OK" || echo "WARN: reporte no encontrado"
+                    # 2. Extraer el reporte del volumen al workspace de Jenkins
+                    docker run --rm \
+                        -v zap-results:/zap/wrk/:ro \
+                        -v $(pwd):/output/:rw \
+                        alpine \
+                        cp /zap/wrk/reporte_zap.html /output/reporte_zap.html
+
+                    # 3. Limpiar el volumen
+                    docker volume rm zap-results || true
                 '''
             }
         }
