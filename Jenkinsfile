@@ -1,6 +1,5 @@
 pipeline {
     agent any
-    
     stages {
         stage('Construcción (Build)') {
             steps {
@@ -12,7 +11,6 @@ pipeline {
                 '''
             }
         }
-        
         stage('Pruebas Funcionales (Test)') {
             steps {
                 echo 'Verificando que la aplicación funcione...'
@@ -22,22 +20,28 @@ pipeline {
                 '''
             }
         }
-        
         stage('Pruebas de Seguridad (OWASP ZAP)') {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
-                sh 'chmod 777 .'
-                sh 'docker run --rm -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true'
+                sh '''
+                    mkdir -p zap-reports
+                    chmod 777 zap-reports
+                    docker run --rm \
+                        -v $(pwd)/zap-reports:/zap/wrk/:rw \
+                        -t zaproxy/zap-stable \
+                        zap-baseline.py \
+                        -t http://10.0.2.15:5000 \
+                        -r reporte_zap.html || true
+                    cp zap-reports/reporte_zap.html . 2>/dev/null || true
+                '''
             }
         }
-        
         stage('Despliegue (Deploy)') {
             steps {
                 echo '¡Despliegue exitoso! Aplicación auditada y en producción.'
             }
         }
     }
-    
     post {
         always {
             echo 'Guardando el reporte de vulnerabilidades...'
