@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
                 sh '''
-                    # 1. Correr ZAP con volumen nombrado
+                    # Correr ZAP con volumen nombrado
                     docker run --rm \
                         --user root \
                         -v zap-results:/zap/wrk/:rw \
@@ -34,18 +34,17 @@ pipeline {
                             chmod 777 /zap/wrk/reporte_zap.html 2>/dev/null || true
                         " || true
 
-                    # 2. Extraer el reporte usando la variable WORKSPACE de Jenkins
+                    # Extraer el reporte usando la ruta real del volumen Jenkins en el host
                     docker run --rm \
                         -v zap-results:/zap/wrk/:ro \
-                        -v $WORKSPACE:/output/:rw \
+                        -v /var/lib/docker/volumes/jenkins_home/_data/workspace/Pipeline-Parcial3:/output/:rw \
                         alpine \
                         cp /zap/wrk/reporte_zap.html /output/reporte_zap.html
 
-                    # 3. Verificar que llegó
-                    echo "--- Archivos en WORKSPACE ---"
-                    ls -la $WORKSPACE/reporte_zap.html || echo "ERROR: no se encontró el reporte"
+                    # Verificar
+                    ls -la $WORKSPACE/reporte_zap.html && echo "Reporte generado OK" || echo "ERROR: reporte no encontrado"
 
-                    # 4. Limpiar el volumen
+                    # Limpiar volumen temporal
                     docker volume rm zap-results || true
                 '''
             }
