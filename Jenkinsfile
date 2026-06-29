@@ -33,20 +33,10 @@ pipeline {
                         -t zaproxy/zap-stable \
                         /bin/bash -c "
                             zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true
-                            echo '--- Archivos en /zap/wrk ---'
-                            ls -la /zap/wrk/ || true
-                            echo '--- Archivos en /root ---'
-                            ls -la /root/ || true
-                            echo '--- Archivos en /home/zap ---'
-                            ls -la /home/zap/ || true
-                            cp /root/reporte_zap.html /zap/wrk/ 2>/dev/null || true
-                            cp /home/zap/reporte_zap.html /zap/wrk/ 2>/dev/null || true
+                            chmod 777 /zap/wrk/reporte_zap.html
                         " || true
 
-                    echo '--- Contenido de zap-reports en el host ---'
-                    ls -la zap-reports/ || true
-
-                    cp zap-reports/reporte_zap.html . 2>/dev/null || echo "WARN: reporte no encontrado"
+                    cp zap-reports/reporte_zap.html . && echo "Reporte copiado OK" || echo "WARN: reporte no encontrado"
                 '''
             }
         }
