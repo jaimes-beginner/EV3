@@ -20,6 +20,7 @@ pipeline {
                 '''
             }
         }
+        
         stage('Pruebas de Seguridad (OWASP ZAP)') {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
@@ -27,12 +28,13 @@ pipeline {
                     mkdir -p zap-reports
                     chmod 777 zap-reports
                     docker run --rm \
+                        --user root \
                         -v $(pwd)/zap-reports:/zap/wrk/:rw \
                         -t zaproxy/zap-stable \
                         zap-baseline.py \
                         -t http://10.0.2.15:5000 \
                         -r reporte_zap.html || true
-                    cp zap-reports/reporte_zap.html . 2>/dev/null || true
+                    cp zap-reports/reporte_zap.html . 2>/dev/null || echo "Reporte no generado"
                 '''
             }
         }
