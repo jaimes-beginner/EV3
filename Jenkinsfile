@@ -20,21 +20,33 @@ pipeline {
                 '''
             }
         }
-        
         stage('Pruebas de Seguridad (OWASP ZAP)') {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
                 sh '''
                     mkdir -p zap-reports
                     chmod 777 zap-reports
+
                     docker run --rm \
                         --user root \
                         -v $(pwd)/zap-reports:/zap/wrk/:rw \
                         -t zaproxy/zap-stable \
-                        zap-baseline.py \
-                        -t http://10.0.2.15:5000 \
-                        -r reporte_zap.html || true
-                    cp zap-reports/reporte_zap.html . 2>/dev/null || echo "Reporte no generado"
+                        /bin/bash -c "
+                            zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true
+                            echo '--- Archivos en /zap/wrk ---'
+                            ls -la /zap/wrk/ || true
+                            echo '--- Archivos en /root ---'
+                            ls -la /root/ || true
+                            echo '--- Archivos en /home/zap ---'
+                            ls -la /home/zap/ || true
+                            cp /root/reporte_zap.html /zap/wrk/ 2>/dev/null || true
+                            cp /home/zap/reporte_zap.html /zap/wrk/ 2>/dev/null || true
+                        " || true
+
+                    echo '--- Contenido de zap-reports en el host ---'
+                    ls -la zap-reports/ || true
+
+                    cp zap-reports/reporte_zap.html . 2>/dev/null || echo "WARN: reporte no encontrado"
                 '''
             }
         }
