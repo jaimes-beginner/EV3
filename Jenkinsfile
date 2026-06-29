@@ -26,6 +26,7 @@ pipeline {
         stage('Pruebas de Seguridad (OWASP ZAP)') {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
+                sh 'chmod 777 .'
                 sh 'docker run --rm -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true'
             }
         }
