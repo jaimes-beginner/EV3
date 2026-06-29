@@ -26,7 +26,9 @@ pipeline {
         stage('Pruebas de Seguridad (OWASP ZAP)') {
             steps {
                 echo 'Lanzando escáner OWASP ZAP contra la aplicación local...'
-                sh 'docker run --rm -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true'
+                
+                // Agregamos -u root para evitar el bloqueo de permisos al guardar el archivo
+                sh 'docker run --rm -u root -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://10.0.2.15:5000 -r reporte_zap.html || true'
             }
         }
         
