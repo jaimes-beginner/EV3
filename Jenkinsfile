@@ -34,14 +34,18 @@ pipeline {
                             chmod 777 /zap/wrk/reporte_zap.html 2>/dev/null || true
                         " || true
 
-                    # 2. Extraer el reporte del volumen al workspace de Jenkins
+                    # 2. Extraer el reporte usando la variable WORKSPACE de Jenkins
                     docker run --rm \
                         -v zap-results:/zap/wrk/:ro \
-                        -v $(pwd):/output/:rw \
+                        -v $WORKSPACE:/output/:rw \
                         alpine \
                         cp /zap/wrk/reporte_zap.html /output/reporte_zap.html
 
-                    # 3. Limpiar el volumen
+                    # 3. Verificar que llegó
+                    echo "--- Archivos en WORKSPACE ---"
+                    ls -la $WORKSPACE/reporte_zap.html || echo "ERROR: no se encontró el reporte"
+
+                    # 4. Limpiar el volumen
                     docker volume rm zap-results || true
                 '''
             }
